@@ -35,6 +35,6 @@ def deploy(id) {
     else if (id == "production"){
         port = '8000'
     }
-    sh "cd src; ./server.py ${port} > output.log 2>&1 &"
+    sh "cd src && ./server.py ${port} > output.log 2>&1 &"
     sh "echo 'Deployed to ${id}'"
 }
