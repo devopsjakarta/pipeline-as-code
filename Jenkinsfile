@@ -22,12 +22,10 @@ node{
 }
 
 def runTests(duration) {
-    node {
-        sh """
-          nosetests src/test.py
-          sleep ${duration}
-        """
-    }
+    sh """
+        nosetests src/test.py
+        sleep ${duration}
+    """
 }
 
 def deploy(id) {
