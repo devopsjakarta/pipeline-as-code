@@ -10,20 +10,33 @@ node{
 
     stage("QA") {
         parallel(
-            test1: { runTests(10) },
-            test2: { runTests(20) }
+            test1: { runTests(10,'staging') },
+            test2: { runTests(20,'staging') }
         )
     }
-    
+
     stage('Production') {
         input "Does staging looks good?"
         deploy('production')
     }
+    
+    stage("Production Test") {
+        parallel(
+            test1: { runTests(10,'production') },
+            test2: { runTests(20,'production') }
+        )
+    }
 }
 
-def runTests(duration) {
+def runTests(duration, environment) {
+    if (environment == "staging"){
+        test = 'test1'
+    }
+    else if (environment == "production"){
+        test = 'test2'
+    }
     sh """
-        nosetests src/test.py
+        nosetests src/${test}.py
         sleep ${duration}
     """
 }
