@@ -1,0 +1,34 @@
+- name: Create Jenkins updates folder
+  file:
+    path: /var/lib/jenkins/updates
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: 0755
+    state: directory
+  tags: [ jenkins_install_plugins, jenkins ]
+
+- name: Update Jenkins plugin data
+  shell: >
+    curl -L https://updates.jenkins-ci.org/update-center.json | sed '1d;$d' > /var/lib/jenkins/updates/default.json
+    creates=/var/lib/jenkins/updates/default.json
+  tags: [ jenkins_install_plugins, jenkins ]
+
+- name: Permissions for default.json updates info
+  file:
+    path: /var/lib/jenkins/updates/default.json
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+    mode: 0755
+  tags: [ jenkins_install_plugins, jenkins ]
+
+- name: Install Jenkins plugins
+  command: >
+    java -jar /opt/jenkins-cli.jar -s http://localhost:8080/
+    install-plugin {{ item }}
+    --username {{ jenkins_admin_username | default('admin') }}
+    --password {{ jenkins_admin_password | default('admin') }}
+    creates=/var/lib/jenkins/plugins/{{ item }}.jpi
+  with_items: "{{ jenkins_plugins }}"
+  notify: restart jenkins
+  ignore_errors: yes
+  tags: [ jenkins_install_plugins, jenkins ]

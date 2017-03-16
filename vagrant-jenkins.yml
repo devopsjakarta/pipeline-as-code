@@ -1,0 +1,8 @@
+- name: Vagrant Jenkins
+  hosts: all
+  user: vagrant
+  become: yes
+  gather_facts: true
+
+  roles:
+    - { role: jenkins }

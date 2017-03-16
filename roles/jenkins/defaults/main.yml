@@ -1,0 +1,9 @@
+jenkins_plugins:
+  - git
+  - git-parameter
+  - github-api
+  - github
+  - workflow-aggregator
+  - build-pipeline-plugin
+  - pipeline-stage-view
+  - greenballs

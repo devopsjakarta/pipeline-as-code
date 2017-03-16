@@ -1,0 +1,19 @@
+- name: Install pip
+  apt:
+    name: python-pip
+    state: latest
+    force: yes
+  tags: jenkins
+
+- name: Install python module
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - nose
+    - requests
+  tags: jenkins
+
+- include: install_jenkins.yml
+- include: install_jenkins_cli.yml
+- include: install_plugin.yml

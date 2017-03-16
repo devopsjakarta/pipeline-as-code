@@ -1,0 +1,90 @@
+- name: Add Jenkins apt key
+  apt_key:
+    url: http://pkg.jenkins-ci.org/debian-stable/jenkins-ci.org.key
+    state: present
+  tags: jenkins
+
+- name: Add Jenkins repository to sources
+  apt_repository:
+    repo: "deb http://pkg.jenkins-ci.org/debian-stable binary/"
+    state: present
+  tags: jenkins
+
+- name: Update APT package cache
+  apt:
+    update_cache: yes
+  tags: jenkins
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    state: latest
+    install_recommends: yes
+  register: jenkins_installed
+  tags: jenkins
+
+- name: Stop Jenkins First
+  service:
+    name: jenkins
+    state: stopped
+  tags: jenkins
+
+- name: Create custom init scripts directory.
+  file:
+    path: /var/lib/jenkins/init.groovy.d
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: 0775
+  tags: jenkins
+
+- name: Configure default admin user
+  template:
+    src: basic-security.groovy.j2
+    dest: /var/lib/jenkins/init.groovy.d/basic-security.groovy
+  when: jenkins_installed.changed
+  tags: jenkins
+
+- name: Change ownership of jenkins related path
+  command: chown -R '{{ ansible_user }}'.'{{ ansible_user }}' '{{item}}'
+  with_items:
+    - /var/lib/jenkins
+    - /var/log/jenkins
+    - /var/run/jenkins
+    - /var/cache/jenkins
+  notify: restart jenkins
+  tags: jenkins
+
+- name: Change Jenkins user and jenkins group configuration
+  lineinfile:
+    dest: /etc/default/jenkins
+    regexp: '{{ item.regex }}'
+    line: '{{ item.line }}'
+    backrefs: yes
+  with_items:
+    - { regex: 'JENKINS_USER=', line: 'JENKINS_USER={{ ansible_user }}' }
+    - { regex: 'JENKINS_GROUP=', line: 'JENKINS_GROUP={{ ansible_user }}' }
+  tags: jenkins
+
+- name: Ensure Jenkins is started and runs on startup
+  service:
+    name: jenkins
+    state: started
+    enabled: yes
+  tags: jenkins
+
+- name: Wait for Jenkins to start up before proceeding next step
+  shell: "curl -D - --silent http://localhost:8080/cli/"
+  register: result
+  until: (result.stdout.find("403 Forbidden") != -1) or (result.stdout.find("200 OK") != -1) and (result.stdout.find("Please wait while") == -1)
+  retries: 60
+  delay: 5
+  changed_when: false
+  ignore_errors: yes
+  tags: jenkins
+
+- name: Remove Jenkins security init scripts after first startup.
+  file:
+    path: /var/lib/jenkins/init.groovy.d/basic-security.groovy
+    state: absent
+  tags: jenkins
