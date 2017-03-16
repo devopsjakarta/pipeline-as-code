@@ -1,6 +1,6 @@
 node{
     stage('Dev') {
-        //checkout scm
+        checkout scm
         sh "echo 'Running test...'"
     }
 
