@@ -6,7 +6,9 @@ Vagrant.configure(2) do |config|
 
   config.vm.box_check_update = false
   
-  config.vm.network "forwarded_port", guest: 8080, host: 8080
+  config.vm.network :forwarded_port, guest: 8080, host: 8080
+  config.vm.network :forwarded_port, guest: 8989, host: 8989
+  config.vm.network :forwarded_port, guest: 8000, host: 8000
 
   config.vm.network "private_network", ip: "192.168.33.10"
 
